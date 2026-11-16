@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Space Exploration Quiz</title>
+<style>
+  :root {
+    --bg: #f3f4fb;
+    --bg-grad: radial-gradient(circle at 20% 0%, #e3e7ff 0%, #f3f4fb 60%);
+    --card: #ffffff;
+    --text: #1d2033;
+    --muted: #5d6280;
+    --border: #dfe2f0;
+    --accent: #5b5bf0;
+    --accent-2: #a14cf2;
+    --track: #e6e8f5;
+    --opt-bg: #f7f8fd;
+    --opt-hover: #eef0ff;
+    --good: #1fa463;
+    --good-bg: #e3f7ec;
+    --bad: #e04848;
+    --bad-bg: #fde8e8;
+    --shadow: 0 10px 30px rgba(40, 45, 90, .10);
+    --hud-bg: #e9edfb;
+    --hud-text: #1f2a6b;
+    --hud-dim: #4a5380;
+    --hud-border: #b8c0e6;
+    --hud-inset: rgba(255, 255, 255, .7);
+    --hud-scan: rgba(31, 42, 107, .05);
+    --hud-glow: rgba(91, 91, 240, .15);
+    --hud-live: #138a4f;
+    --star: #5b5bf0;
+    --star-opacity: .35;
+    --orbit: rgba(91, 91, 240, .45);
+    --ring: rgba(161, 76, 242, .55);
+    --planet-glow: rgba(122, 90, 245, .22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0e1a;
+      --bg-grad: radial-gradient(circle at 20% 0%, #1d2148 0%, #0c0e1a 60%);
+      --card: #161a2e;
+      --text: #e8eaf6;
+      --muted: #9aa0c3;
+      --border: #2a2f4d;
+      --accent: #8282ff;
+      --accent-2: #c77dff;
+      --track: #252a45;
+      --opt-bg: #1c2038;
+      --opt-hover: #242a4a;
+      --good: #3ddc89;
+      --good-bg: #133626;
+      --bad: #ff6b6b;
+      --bad-bg: #3d1a1f;
+      --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      --hud-bg: #070b18;
+      --hud-text: #7cf0c4;
+      --hud-dim: #8fb8a8;
+      --hud-border: #1f4a3e;
+      --hud-inset: rgba(124, 240, 196, .06);
+      --hud-scan: rgba(124, 240, 196, .05);
+      --hud-glow: rgba(61, 220, 137, .25);
+      --hud-live: #3ddc89;
+      --star: #ffffff;
+      --star-opacity: .7;
+      --orbit: rgba(124, 240, 196, .35);
+      --ring: rgba(199, 125, 255, .6);
+      --planet-glow: rgba(130, 110, 255, .35);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg-grad), var(--bg);
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 48px 16px;
+  }
+  main { width: 100%; max-width: 440px; position: relative; z-index: 1; }
+  body::before, body::after {
+    content: "";
+    position: fixed;
+    inset: -380px 0 0 0;
+    pointer-events: none;
+    z-index: 0;
+    background-repeat: repeat;
+  }
+  body::before {
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, var(--star) 50%, transparent 51%),
+      radial-gradient(1px 1px at 90px 140px, var(--star) 50%, transparent 51%),
+      radial-gradient(1px 1px at 160px 60px, var(--star) 50%, transparent 51%),
+      radial-gradient(1px 1px at 130px 190px, var(--star) 50%, transparent 51%),
+      radial-gradient(1px 1px at 50px 170px, var(--star) 50%, transparent 51%),
+      radial-gradient(1px 1px at 190px 110px, var(--star) 50%, transparent 51%);
+    background-size: 200px 200px;
+    opacity: var(--star-opacity);
+    animation: drift 120s linear infinite;
+  }
+  body::after {
+    background-image:
+      radial-gradient(1.5px 1.5px at 70px 80px, var(--star) 50%, transparent 51%),
+      radial-gradient(2px 2px at 260px 210px, var(--star) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 330px 40px, var(--star) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 180px 320px, var(--star) 50%, transparent 51%);
+    background-size: 380px 380px;
+    opacity: var(--star-opacity);
+    animation: drift-lg 200s linear infinite, twinkle 5s ease-in-out infinite;
+  }
+  @keyframes drift { to { transform: translateY(200px); } }
+  @keyframes drift-lg { to { transform: translateY(380px); } }
+  @keyframes twinkle { 50% { opacity: calc(var(--star-opacity) * .45); } }
+  header { text-align: center; margin-bottom: 20px; }
+  .scene { display: block; width: 100%; height: auto; margin: -24px auto 4px; overflow: visible; }
+  .scene .orbit { fill: none; stroke: var(--orbit); stroke-width: 1; stroke-dasharray: 3 5; }
+  .scene .ring { fill: none; stroke: var(--ring); stroke-width: 5; stroke-linecap: round; }
+  .scene .band { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 5; stroke-linecap: round; }
+  .scene .crater { fill: rgba(20, 10, 60, .22); }
+  .scene .pf-0 { stop-color: #c9b6ff; }
+  .scene .pf-1 { stop-color: #7a5af5; }
+  .scene .pf-2 { stop-color: #3a2390; }
+  .scene .pg-0 { stop-color: var(--planet-glow); }
+  .scene .pg-1 { stop-color: var(--planet-glow); stop-opacity: 0; }
+  .scene .flame { transform-box: fill-box; transform-origin: right center; animation: flicker .18s ease-in-out infinite alternate; }
+  .scene .ufo-light { animation: blink 1.2s ease-in-out infinite; }
+  .scene .ufo-light:nth-of-type(2) { animation-delay: .4s; }
+  .scene .ufo-light:nth-of-type(3) { animation-delay: .8s; }
+  @keyframes flicker { to { transform: scaleX(.7); } }
+  @media (max-width: 420px) { .scene { margin-top: -32px; } }
+  header h1 {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--hud-text);
+    background:
+      repeating-linear-gradient(0deg, var(--hud-scan) 0 1px, transparent 1px 3px),
+      var(--hud-bg);
+    border: 1px solid var(--hud-border);
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 3px var(--hud-inset), 0 0 18px var(--hud-glow);
+    text-shadow: 0 0 8px var(--hud-glow);
+  }
+  .hud-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 10px;
+    border-right: 1px solid var(--hud-border);
+    font-size: 11px;
+    letter-spacing: .16em;
+    color: var(--hud-dim);
+    text-shadow: none;
+  }
+  .hud-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--hud-live);
+    box-shadow: 0 0 6px var(--hud-live);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 50% { opacity: .35; } }
+  @media (max-width: 420px) {
+    header h1 { font-size: 14px; letter-spacing: .08em; gap: 8px; padding: 8px 12px; }
+  }
+  @media (forced-colors: active) {
+    header h1 { border-color: CanvasText; }
+    .hud-dot { background: CanvasText; }
+  }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .score {
+    font-weight: 600;
+    color: var(--text);
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--opt-bg);
+    border: 1px solid var(--border);
+  }
+  .score.bump { animation: bump .4s ease; }
+  .progress {
+    height: 8px;
+    background: var(--track);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 999px;
+    transition: width .45s cubic-bezier(.2,.8,.2,1);
+  }
+  .question { font-size: 17px; font-weight: 600; margin: 0 0 16px; line-height: 1.4; }
+  .options { display: grid; gap: 10px; }
+  .option {
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    color: var(--text);
+    background: var(--opt-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  .option:hover:not(:disabled) { background: var(--opt-hover); border-color: var(--accent); }
+  .option:active:not(:disabled) { transform: scale(.98); }
+  .option:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .option:disabled { cursor: default; }
+  .option .key {
+    flex: none;
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .option.correct {
+    background: var(--good-bg);
+    border-color: var(--good);
+    animation: pop .45s ease;
+  }
+  .option.correct .key { background: var(--good); border-color: var(--good); color: #fff; }
+  .option.wrong {
+    background: var(--bad-bg);
+    border-color: var(--bad);
+    animation: shake .45s ease;
+  }
+  .option.wrong .key { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .option.dim { opacity: .55; }
+  .feedback {
+    min-height: 24px;
+    margin: 14px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .25s, transform .25s;
+  }
+  .feedback.show { opacity: 1; transform: none; }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+  .fact { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
+  .btn {
+    font: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 18px;
+    width: 100%;
+    margin-top: 16px;
+    color: #fff;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: scale(.98); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .hidden { display: none !important; }
+  .fade-in { animation: fadeIn .35s ease; }
+  .results { text-align: center; }
+  .emoji { font-size: 72px; line-height: 1; margin: 6px 0 10px; display: inline-block; animation: float 2.4s ease-in-out infinite; }
+  .results h2 { margin: 0 0 4px; font-size: 22px; }
+  .final-score {
+    font-size: 40px;
+    font-weight: 800;
+    margin: 8px 0 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .results p { color: var(--muted); margin: 0; }
+  .badge {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 10px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--good);
+    background: var(--good-bg);
+    border: 1px solid var(--good);
+  }
+  .results.celebrate {
+    border-color: var(--good);
+    box-shadow: var(--shadow), 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent), 0 0 40px color-mix(in srgb, var(--good) 30%, transparent);
+  }
+  .results.celebrate .emoji { animation: party 1s cubic-bezier(.3,1.6,.5,1) both, float 2.4s ease-in-out 1s infinite; }
+  .results.celebrate .final-score { animation: glow 1.8s ease-in-out infinite; }
+  .results.celebrate .badge { animation: pop .6s ease both; }
+  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10; }
+  .confetti i {
+    position: absolute;
+    top: -16px;
+    width: 8px; height: 14px;
+    border-radius: 2px;
+    opacity: 0;
+    animation: fall var(--d) cubic-bezier(.25,.6,.4,1) var(--delay) forwards;
+  }
+  @keyframes fall {
+    0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+    85% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--x), 105vh) rotate(var(--r)); }
+  }
+  @keyframes party {
+    0% { transform: scale(.2) rotate(-30deg); }
+    60% { transform: scale(1.25) rotate(10deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  @keyframes glow { 50% { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent-2) 60%, transparent)); transform: scale(1.06); } }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(3px); }
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.04); box-shadow: 0 0 0 6px color-mix(in srgb, var(--good) 25%, transparent); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+  }
+  @keyframes bump { 50% { transform: scale(1.18); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes float { 50% { transform: translateY(-8px) rotate(-4deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+    body::before, body::after { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg class="scene" id="scene" viewBox="0 0 440 180" role="img" aria-label="A rocket and an alien spaceship orbiting a ringed planet">
+      <defs>
+        <radialGradient id="planetFill" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" class="pf-0"/>
+          <stop offset="55%" class="pf-1"/>
+          <stop offset="100%" class="pf-2"/>
+        </radialGradient>
+        <radialGradient id="planetGlow">
+          <stop offset="40%" class="pg-0"/>
+          <stop offset="100%" class="pg-1"/>
+        </radialGradient>
+        <linearGradient id="flame" x1="1" x2="0">
+          <stop offset="0%" stop-color="#ffd166"/>
+          <stop offset="100%" stop-color="#ff6b3d" stop-opacity="0"/>
+        </linearGradient>
+        <mask id="frontMask" maskUnits="userSpaceOnUse" x="-260" y="-120" width="520" height="240">
+          <rect x="-260" y="0" width="520" height="120" fill="#fff"/>
+        </mask>
+        <g id="rocket">
+          <path class="flame" d="M-13,-3.5 L-30,0 L-13,3.5 Z" fill="url(#flame)"/>
+          <path d="M-11,-6 L-19,-12 L-7,-6 Z M-11,6 L-19,12 L-7,6 Z" fill="#e04848"/>
+          <path d="M-14,-6 L5,-6 Q17,0 5,6 L-14,6 Z" fill="#eef0ff" stroke="#9aa0c3" stroke-width=".8"/>
+          <path d="M5,-6 Q17,0 5,6 Q9,0 5,-6 Z" fill="#e04848"/>
+          <circle cx="-1" cy="0" r="3" fill="#4cc9f0" stroke="#5d6280" stroke-width=".8"/>
+        </g>
+        <g id="ufo">
+          <ellipse cx="0" cy="-4" rx="7" ry="6.5" fill="#7cf0c4" fill-opacity=".75" stroke="#3ddc89" stroke-width=".8"/>
+          <circle cx="0" cy="-6" r="2" fill="#1d2033" opacity=".55"/>
+          <ellipse cx="0" cy="1" rx="17" ry="5.5" fill="#a14cf2" stroke="#6b2fb3" stroke-width=".8"/>
+          <circle class="ufo-light" cx="-10" cy="1.5" r="1.4" fill="#ffd166"/>
+          <circle class="ufo-light" cx="0" cy="2.6" r="1.4" fill="#ffd166"/>
+          <circle class="ufo-light" cx="10" cy="1.5" r="1.4" fill="#ffd166"/>
+        </g>
+      </defs>
+      <g transform="translate(220 92)">
+        <circle r="92" fill="url(#planetGlow)"/>
+        <g transform="rotate(-12)">
+          <ellipse class="orbit" rx="175" ry="38"/>
+          <use href="#rocket" id="rocketBack"/>
+          <use href="#ufo" id="ufoBack"/>
+        </g>
+        <g transform="rotate(-20)">
+          <ellipse class="ring" rx="76" ry="13"/>
+        </g>
+        <circle r="44" fill="url(#planetFill)"/>
+        <path class="band" d="M-42,-10 Q0,-2 42,-14 M-44,6 Q0,14 43,2"/>
+        <circle cx="14" cy="16" r="6" class="crater"/>
+        <circle cx="-18" cy="-20" r="4" class="crater"/>
+        <g transform="rotate(-20)">
+          <path class="ring" d="M-76,0 A76,13 0 0 0 76,0"/>
+        </g>
+        <g transform="rotate(-12)" mask="url(#frontMask)">
+          <use href="#rocket" id="rocketFront"/>
+          <use href="#ufo" id="ufoFront"/>
+        </g>
+      </g>
+    </svg>
+    <h1><span class="hud-status" aria-hidden="true"><span class="hud-dot"></span>Live</span><span aria-hidden="true">🚀</span> Space Exploration Quiz</h1>
+    <p>10 questions about humanity's journey to the stars</p>
+  </header>
+
+  <section class="card" id="quiz" aria-live="polite">
+    <div class="meta">
+      <span id="counter">Question 1 of 10</span>
+      <span class="score" id="score">Score: 0</span>
+    </div>
+    <div class="progress" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+      <div class="progress-fill" id="progress"></div>
+    </div>
+    <div id="qwrap">
+      <h2 class="question" id="question"></h2>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback" role="status"></div>
+      <button class="btn hidden" id="next" type="button">Next question →</button>
+    </div>
+  </section>
+
+  <section class="card results hidden" id="results" aria-live="polite">
+    <div class="badge hidden" id="badge">🎖️ Mission accomplished</div>
+    <div class="emoji" id="emoji" aria-hidden="true">🌟</div>
+    <h2 id="verdict">Great job!</h2>
+    <div class="final-score" id="final"></div>
+    <p id="summary"></p>
+    <button class="btn" id="restart" type="button">↻ Play again</button>
+  </section>
+</main>
+
+<script>
+(() => {
+  const QUESTIONS = [
+    { q: "Who was the first human to travel into space?", a: ["Neil Armstrong", "Yuri Gagarin", "Alan Shepard", "John Glenn"], c: 1, f: "Gagarin orbited Earth aboard Vostok 1 on April 12, 1961." },
+    { q: "Which mission first landed humans on the Moon?", a: ["Apollo 8", "Apollo 13", "Apollo 11", "Gemini 4"], c: 2, f: "Apollo 11 touched down on July 20, 1969." },
+    { q: "What was the first artificial satellite launched into orbit?", a: ["Explorer 1", "Sputnik 1", "Vanguard 1", "Telstar"], c: 1, f: "The USSR launched Sputnik 1 on October 4, 1957." },
+    { q: "Which planet is known as the Red Planet?", a: ["Venus", "Jupiter", "Mercury", "Mars"], c: 3, f: "Iron oxide (rust) in its soil gives Mars its reddish color." },
+    { q: "Which spacecraft is the most distant human-made object from Earth?", a: ["Voyager 1", "Pioneer 10", "New Horizons", "Voyager 2"], c: 0, f: "Voyager 1 entered interstellar space in 2012." },
+    { q: "What is the name of NASA's rover that landed on Mars in 2021?", a: ["Curiosity", "Opportunity", "Perseverance", "Spirit"], c: 2, f: "Perseverance landed in Jezero Crater with the Ingenuity helicopter." },
+    { q: "Which space telescope launched in December 2021 observes mainly in infrared?", a: ["Hubble", "James Webb", "Spitzer", "Kepler"], c: 1, f: "JWST orbits the Sun near the L2 point, 1.5 million km from Earth." },
+    { q: "Who was the first woman to travel into space?", a: ["Sally Ride", "Valentina Tereshkova", "Mae Jemison", "Svetlana Savitskaya"], c: 1, f: "Tereshkova flew aboard Vostok 6 in June 1963." },
+    { q: "Roughly how often does the ISS orbit Earth?", a: ["Every 24 hours", "Every 12 hours", "Every 90 minutes", "Every 5 minutes"], c: 2, f: "At ~28,000 km/h, the ISS sees about 16 sunrises a day." },
+    { q: "Which probe made the first flyby of Pluto in 2015?", a: ["Cassini", "New Horizons", "Juno", "Galileo"], c: 1, f: "New Horizons revealed Pluto's heart-shaped Tombaugh Regio." }
+  ];
+  const TOTAL = QUESTIONS.length;
+  const KEYS = ["A", "B", "C", "D"];
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    quiz: $("quiz"), results: $("results"), qwrap: $("qwrap"),
+    counter: $("counter"), score: $("score"), progress: $("progress"),
+    bar: document.querySelector(".progress"), question: $("question"),
+    options: $("options"), feedback: $("feedback"), next: $("next"),
+    emoji: $("emoji"), verdict: $("verdict"), final: $("final"),
+    summary: $("summary"), restart: $("restart"), badge: $("badge")
+  };
+  let index = 0, score = 0, answered = false, confettiTimer;
+
+  function setProgress(done) {
+    els.progress.style.width = (done / TOTAL * 100) + "%";
+    els.bar.setAttribute("aria-valuenow", done);
+  }
+
+  function render() {
+    const item = QUESTIONS[index];
+    answered = false;
+    els.counter.textContent = `Question ${index + 1} of ${TOTAL}`;
+    els.question.textContent = item.q;
+    els.options.innerHTML = "";
+    item.a.forEach((text, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      btn.dataset.i = i;
+      btn.innerHTML = `<span class="key">${KEYS[i]}</span><span></span>`;
+      btn.lastChild.textContent = text;
+      btn.addEventListener("click", () => choose(i));
+      els.options.appendChild(btn);
+    });
+    els.feedback.className = "feedback";
+    els.feedback.innerHTML = "";
+    els.next.classList.add("hidden");
+    els.next.textContent = index === TOTAL - 1 ? "See results 🏁" : "Next question →";
+    els.qwrap.classList.remove("fade-in");
+    void els.qwrap.offsetWidth;
+    els.qwrap.classList.add("fade-in");
+  }
+
+  function choose(i) {
+    if (answered) return;
+    answered = true;
+    const item = QUESTIONS[index];
+    const buttons = [...els.options.children];
+    const correct = i === item.c;
+    buttons.forEach((b, j) => {
+      b.disabled = true;
+      if (j === item.c) b.classList.add("correct");
+      else if (j === i) b.classList.add("wrong");
+      else b.classList.add("dim");
+    });
+    if (correct) {
+      score++;
+      els.score.textContent = `Score: ${score}`;
+      els.score.classList.remove("bump");
+      void els.score.offsetWidth;
+      els.score.classList.add("bump");
+    }
+    els.feedback.innerHTML = "";
+    els.feedback.append(correct ? "✅ Correct!" : `❌ Not quite — it's ${item.a[item.c]}.`);
+    const fact = document.createElement("span");
+    fact.className = "fact";
+    fact.textContent = item.f;
+    els.feedback.appendChild(fact);
+    els.feedback.className = "feedback show " + (correct ? "good" : "bad");
+    setProgress(index + 1);
+    els.next.classList.remove("hidden");
+    els.next.focus({ preventScroll: true });
+  }
+
+  function next() {
+    if (!answered) return;
+    if (index < TOTAL - 1) { index++; render(); }
+    else showResults();
+  }
+
+  function showResults() {
+    const pct = score / TOTAL;
+    let emoji, verdict, msg;
+    if (pct === 1) { emoji = "🏆"; verdict = "Mission Commander!"; msg = "A perfect score — NASA should be calling you."; }
+    else if (pct >= .8) { emoji = "🚀"; verdict = "Stellar work!"; msg = "You're ready for launch."; }
+    else if (pct >= .6) { emoji = "🌟"; verdict = "Nice orbit!"; msg = "Solid knowledge of the cosmos."; }
+    else if (pct >= .4) { emoji = "🛰️"; verdict = "Getting there!"; msg = "A few more trips around the Sun and you'll ace it."; }
+    else { emoji = "👽"; verdict = "Lost in space?"; msg = "Don't worry — even astronauts train for years."; }
+    els.emoji.textContent = emoji;
+    els.verdict.textContent = verdict;
+    els.final.textContent = `${score} / ${TOTAL}`;
+    els.summary.textContent = msg;
+    els.quiz.classList.add("hidden");
+    els.results.classList.remove("hidden", "fade-in");
+    void els.results.offsetWidth;
+    els.results.classList.add("fade-in");
+    const celebrate = score >= 8;
+    els.results.classList.toggle("celebrate", celebrate);
+    els.badge.classList.toggle("hidden", !celebrate);
+    if (celebrate) launchConfetti();
+    els.restart.focus({ preventScroll: true });
+  }
+
+  function launchConfetti() {
+    clearConfetti();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const colors = ["#5b5bf0", "#a14cf2", "#3ddc89", "#ffd166", "#ff6b6b", "#4cc9f0"];
+    const layer = document.createElement("div");
+    layer.className = "confetti";
+    layer.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < 90; i++) {
+      const p = document.createElement("i");
+      p.style.left = Math.random() * 100 + "vw";
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty("--x", (Math.random() * 160 - 80) + "px");
+      p.style.setProperty("--r", (Math.random() * 1080 - 540) + "deg");
+      p.style.setProperty("--d", (2.2 + Math.random() * 1.8) + "s");
+      p.style.setProperty("--delay", (Math.random() * .6) + "s");
+      if (i % 3 === 0) { p.style.width = "8px"; p.style.height = "8px"; p.style.borderRadius = "50%"; }
+      layer.appendChild(p);
+    }
+    document.body.appendChild(layer);
+    confettiTimer = setTimeout(clearConfetti, 4800);
+  }
+
+  function clearConfetti() {
+    clearTimeout(confettiTimer);
+    document.querySelectorAll(".confetti").forEach((n) => n.remove());
+  }
+
+  function restart() {
+    index = 0; score = 0;
+    clearConfetti();
+    els.score.textContent = "Score: 0";
+    setProgress(0);
+    els.results.classList.add("hidden");
+    els.quiz.classList.remove("hidden");
+    render();
+  }
+
+  els.next.addEventListener("click", next);
+  els.restart.addEventListener("click", restart);
+  document.addEventListener("keydown", (e) => {
+    if (els.quiz.classList.contains("hidden")) return;
+    const k = e.key.toUpperCase();
+    const n = KEYS.indexOf(k) !== -1 ? KEYS.indexOf(k) : "1234".indexOf(k);
+    if (!answered && n !== -1) { e.preventDefault(); choose(n); }
+  });
+
+  render();
+
+  const ships = {
+    rocket: [$("rocketBack"), $("rocketFront")],
+    ufo: [$("ufoBack"), $("ufoFront")]
+  };
+  const RX = 175, RY = 38, PERIOD = 16000;
+  const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+  let orbitFrame;
+
+  function place(pair, t, rotate, bob) {
+    const x = RX * Math.cos(t), y = RY * Math.sin(t);
+    const s = 0.75 + 0.3 * (Math.sin(t) + 1) / 2;
+    const angle = rotate ? Math.atan2(RY * Math.cos(t), -RX * Math.sin(t)) * 180 / Math.PI : 0;
+    const tf = `translate(${x.toFixed(2)} ${(y + bob).toFixed(2)}) rotate(${angle.toFixed(1)}) scale(${s.toFixed(3)})`;
+    pair.forEach((el) => el.setAttribute("transform", tf));
+  }
+
+  function drawOrbit(now) {
+    const t = (now / PERIOD) * Math.PI * 2;
+    place(ships.rocket, t, true, 0);
+    place(ships.ufo, t + Math.PI * 0.95, false, Math.sin(now / 300) * 1.5);
+    orbitFrame = requestAnimationFrame(drawOrbit);
+  }
+
+  function startOrbit() {
+    cancelAnimationFrame(orbitFrame);
+    if (motionQuery.matches) {
+      place(ships.rocket, 0.55, true, 0);
+      place(ships.ufo, Math.PI + 0.9, false, 0);
+    } else {
+      orbitFrame = requestAnimationFrame(drawOrbit);
+    }
+  }
+  motionQuery.addEventListener("change", startOrbit);
+  startOrbit();
+})();
+</script>
+</body>
+</html>
